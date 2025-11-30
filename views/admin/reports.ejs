@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Financial Reports - EcomStore Admin</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <%- include('../partials/header') %>
+  
+  <main class="admin-page">
+    <div class="container">
+      <h1>Financial Reports</h1>
+      
+      <% if (report) { %>
+        <div class="report-header">
+          <h2>Monthly Report - <%= report.month %>/<%= report.year %></h2>
+        </div>
+        
+        <div class="report-cards">
+          <div class="report-card revenue">
+            <h3>Total Revenue</h3>
+            <p class="report-value">$<%= report.revenue %></p>
+          </div>
+          
+          <div class="report-card cost">
+            <h3>Total Cost</h3>
+            <p class="report-value">$<%= report.cost %></p>
+          </div>
+          
+          <div class="report-card profit">
+            <h3>Total Profit</h3>
+            <p class="report-value">$<%= report.profit %></p>
+          </div>
+          
+          <div class="report-card margin">
+            <h3>Profit Margin</h3>
+            <p class="report-value"><%= report.profitMargin %>%</p>
+          </div>
+        </div>
+        
+        <!-- Visualizations -->
+        <div class="charts-section">
+          <div class="chart-container">
+            <h3>Revenue vs Cost vs Profit</h3>
+            <canvas id="barChart"></canvas>
+          </div>
+          
+          <div class="chart-container">
+            <h3>Financial Breakdown</h3>
+            <canvas id="pieChart"></canvas>
+          </div>
+          
+          <div class="chart-container full-width">
+            <h3>Profit Analysis</h3>
+            <canvas id="doughnutChart"></canvas>
+          </div>
+        </div>
+        
+        <script>
+          // Bar Chart - Revenue vs Cost vs Profit
+          const barCtx = document.getElementById('barChart').getContext('2d');
+          new Chart(barCtx, {
+            type: 'bar',
+            data: {
+              labels: ['Revenue', 'Cost', 'Profit'],
+              datasets: [{
+                label: 'Amount ($)',
+                data: [<%= report.revenue %>, <%= report.cost %>, <%= report.profit %>],
+                backgroundColor: [
+                  'rgba(52, 152, 219, 0.8)',
+                  'rgba(231, 76, 60, 0.8)',
+                  'rgba(39, 174, 96, 0.8)'
+                ],
+                borderColor: [
+                  'rgba(52, 152, 219, 1)',
+                  'rgba(231, 76, 60, 1)',
+                  'rgba(39, 174, 96, 1)'
+                ],
+                borderWidth: 2
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: true,
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  ticks: {
+                    callback: function(value) {
+                      return '$' + value.toFixed(2);
+                    }
+                  }
+                }
+              },
+              plugins: {
+                legend: {
+                  display: false
+                }
+              }
+            }
+          });
+          
+          // Pie Chart - Revenue Breakdown
+          const pieCtx = document.getElementById('pieChart').getContext('2d');
+          new Chart(pieCtx, {
+            type: 'pie',
+            data: {
+              labels: ['Profit', 'Cost'],
+              datasets: [{
+                data: [<%= report.profit %>, <%= report.cost %>],
+                backgroundColor: [
+                  'rgba(39, 174, 96, 0.8)',
+                  'rgba(231, 76, 60, 0.8)'
+                ],
+                borderColor: [
+                  'rgba(39, 174, 96, 1)',
+                  'rgba(231, 76, 60, 1)'
+                ],
+                borderWidth: 2
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: true,
+              plugins: {
+                legend: {
+                  position: 'bottom'
+                },
+                tooltip: {
+                  callbacks: {
+                    label: function(context) {
+                      return context.label + ': $' + context.parsed.toFixed(2);
+                    }
+                  }
+                }
+              }
+            }
+          });
+          
+          // Doughnut Chart - Profit Margin
+          const doughnutCtx = document.getElementById('doughnutChart').getContext('2d');
+          const profitMargin = <%= report.profitMargin %>;
+          const remaining = 100 - profitMargin;
+          
+          new Chart(doughnutCtx, {
+            type: 'doughnut',
+            data: {
+              labels: ['Profit Margin', 'Cost Ratio'],
+              datasets: [{
+                data: [profitMargin, remaining],
+                backgroundColor: [
+                  'rgba(243, 156, 18, 0.8)',
+                  'rgba(149, 165, 166, 0.8)'
+                ],
+                borderColor: [
+                  'rgba(243, 156, 18, 1)',
+                  'rgba(149, 165, 166, 1)'
+                ],
+                borderWidth: 2
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: true,
+              plugins: {
+                legend: {
+                  position: 'bottom'
+                },
+                tooltip: {
+                  callbacks: {
+                    label: function(context) {
+                      return context.label + ': ' + context.parsed.toFixed(2) + '%';
+                    }
+                  }
+                }
+              }
+            }
+          });
+        </script>
+      <% } else { %>
+        <div class="empty-state">
+          <p>No financial data available for this month.</p>
+        </div>
+      <% } %>
+    </div>
+  </main>
+  
+  <%- include('../partials/footer') %>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orders Dashboard - EcomStore Admin</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <%- include('../partials/header') %>
+  
+  <main class="admin-page">
+    <div class="container">
+      <h1>Orders Dashboard</h1>
+      
+      <% if (orders.length === 0) { %>
+        <div class="empty-state">
+          <p>No orders have been placed yet.</p>
+        </div>
+      <% } else { %>
+        <div class="table-responsive">
+          <table class="orders-table">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Email</th>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Date</th>
+                <th>Order Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% orders.forEach(order => { %>
+                <tr>
+                  <td><%= order._id.toString().slice(-8) %></td>
+                  <td><%= order.customerName %></td>
+                  <td><%= order.customerEmail %></td>
+                  <td><%= order.productName %></td>
+                  <td>$<%= order.price.toFixed(2) %></td>
+                  <td><%= new Date(order.purchaseDate).toLocaleDateString() %></td>
+                  <td>
+                    <select onchange="updateOrderStatus('<%= order._id %>', this.value)" class="status-select">
+                      <option value="Processing" <%= (order.status || 'Processing') === 'Processing' ? 'selected' : '' %>>Processing</option>
+                      <option value="Shipped" <%= order.status === 'Shipped' ? 'selected' : '' %>>Shipped</option>
+                      <option value="Delivered" <%= order.status === 'Delivered' ? 'selected' : '' %>>Delivered</option>
+                      <option value="Cancelled" <%= order.status === 'Cancelled' ? 'selected' : '' %>>Cancelled</option>
+                    </select>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+  </main>
+  
+  <%- include('../partials/footer') %>
+  
+  <script>
+    async function updateOrderStatus(orderId, status) {
+      try {
+        const response = await fetch('/orders/status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId, status })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+          alert('Order status updated!');
+        } else {
+          alert('Error: ' + data.error);
+        }
+      } catch (error) {
+        alert('Failed to update status');
+      }
+    }
+  </script>
+</body>
+</html>

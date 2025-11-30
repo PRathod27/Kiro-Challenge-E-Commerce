@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Orders - EcomStore</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <%- include('partials/header') %>
+  
+  <main class="orders-page">
+    <div class="container">
+      <h1>My Orders</h1>
+      
+      <% if (orders.length === 0) { %>
+        <div class="empty-state">
+          <p>You haven't placed any orders yet.</p>
+          <a href="/" class="btn btn-primary">Start Shopping</a>
+        </div>
+      <% } else { %>
+        <div class="orders-list">
+          <% orders.forEach(order => { %>
+            <div class="order-card">
+              <div class="order-header">
+                <h3>Order #<%= order._id.toString().slice(-8) %></h3>
+                <span class="order-date"><%= new Date(order.purchaseDate).toLocaleDateString() %></span>
+              </div>
+              <div class="order-body">
+                <div class="order-info">
+                  <p><strong>Product:</strong> <%= order.productName %></p>
+                  <p><strong>Quantity:</strong> <%= order.quantity || 1 %></p>
+                  <p><strong>Price:</strong> $<%= (order.price * (order.quantity || 1)).toFixed(2) %></p>
+                  <p><strong>Status:</strong> <span class="status-badge status-<%= (order.status || 'Processing').toLowerCase() %>"><%= order.status || 'Processing' %></span></p>
+                </div>
+                <div class="order-actions">
+                  <a href="/invoice/<%= order._id %>" class="btn btn-primary">View Invoice</a>
+                  <button onclick="reorder('<%= order._id %>')" class="btn btn-secondary">Reorder</button>
+                  <a href="/products/<%= order.productId %>" class="btn btn-secondary">View Product</a>
+                </div>
+              </div>
+              
+              <% if (order.statusHistory && order.statusHistory.length > 0) { %>
+                <div class="order-timeline">
+                  <h4>Order Timeline</h4>
+                  <div class="timeline">
+                    <% order.statusHistory.forEach(history => { %>
+                      <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-content">
+                          <strong><%= history.status %></strong>
+                          <span class="timeline-date"><%= new Date(history.date).toLocaleString() %></span>
+                          <% if (history.note) { %>
+                            <p><%= history.note %></p>
+                          <% } %>
+                        </div>
+                      </div>
+                    <% }) %>
+                  </div>
+                </div>
+              <% } %>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </div>
+  </main>
+  
+  <%- include('partials/footer') %>
+  
+  <script>
+    async function reorder(orderId) {
+      if (!confirm('Place this order again?')) return;
+      
+      try {
+        const response = await fetch('/orders/reorder', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+          alert(data.message);
+          location.reload();
+        } else {
+          alert('Error: ' + data.error);
+        }
+      } catch (error) {
+        alert('Failed to reorder');
+      }
+    }
+  </script>
+</body>
+</html>

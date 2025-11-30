@@ -1,0 +1,28 @@
+<header>
+  <nav class="navbar">
+    <div class="container">
+      <a href="/" class="logo">🛒 EcomStore</a>
+      <ul class="nav-links">
+        <li><a href="/">Home</a></li>
+        <% if (isAuthenticated) { %>
+          <% if (isAdmin) { %>
+            <li><a href="/admin/dashboard">Orders</a></li>
+            <li><a href="/admin/products">Products</a></li>
+            <li><a href="/admin/reports">Reports</a></li>
+            <li><a href="/admin/analytics">Analytics</a></li>
+            <li><a href="/admin/database">Database</a></li>
+          <% } else { %>
+            <li><a href="/my-orders">My Orders</a></li>
+            <li><a href="/wishlist" class="wishlist-link">❤️ Wishlist</a></li>
+            <li><a href="/cart" class="cart-link">🛒 Cart</a></li>
+          <% } %>
+          <li class="user-name">👤 <%= user.name %></li>
+          <li><a href="/logout" class="btn-logout">Logout</a></li>
+        <% } else { %>
+          <li><a href="/login">Login</a></li>
+          <li><a href="/register" class="btn-primary">Register</a></li>
+        <% } %>
+      </ul>
+    </div>
+  </nav>
+</header>

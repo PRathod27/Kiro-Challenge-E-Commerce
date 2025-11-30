@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Database Viewer - EcomStore Admin</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <%- include('../partials/header') %>
+  
+  <main class="admin-page">
+    <div class="container">
+      <h1>Database Viewer</h1>
+      
+      <div class="database-controls">
+        <form method="GET" action="/admin/database" class="db-filter-form">
+          <div class="form-group">
+            <label for="collection">Collection:</label>
+            <select name="collection" id="collection" onchange="this.form.submit()">
+              <option value="users" <%= selectedCollection === 'users' ? 'selected' : '' %>>Users</option>
+              <option value="products" <%= selectedCollection === 'products' ? 'selected' : '' %>>Products</option>
+              <option value="orders" <%= selectedCollection === 'orders' ? 'selected' : '' %>>Orders</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="search">Search:</label>
+            <input type="text" name="search" id="search" value="<%= search %>" placeholder="Search...">
+          </div>
+          
+          <button type="submit" class="btn btn-primary">Search</button>
+          <a href="/admin/database/export?collection=<%= selectedCollection %>" class="btn btn-secondary">Export CSV</a>
+        </form>
+      </div>
+      
+      <div class="database-stats">
+        <p><strong>Total Records:</strong> <%= data.length %></p>
+      </div>
+      
+      <% if (data.length === 0) { %>
+        <div class="empty-state">
+          <p>No data found in <%= selectedCollection %> collection.</p>
+        </div>
+      <% } else { %>
+        <div class="table-responsive">
+          <table class="database-table">
+            <thead>
+              <tr>
+                <% const headers = Object.keys(data[0]).filter(key => key !== '__v'); %>
+                <% headers.forEach(header => { %>
+                  <th><%= header %></th>
+                <% }) %>
+              </tr>
+            </thead>
+            <tbody>
+              <% data.forEach(row => { %>
+                <tr>
+                  <% headers.forEach(header => { %>
+                    <td>
+                      <% if (typeof row[header] === 'object' && row[header] !== null) { %>
+                        <%= JSON.stringify(row[header]).substring(0, 50) %>...
+                      <% } else { %>
+                        <%= row[header] %>
+                      <% } %>
+                    </td>
+                  <% }) %>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+  </main>
+  
+  <%- include('../partials/footer') %>
+</body>
+</html>

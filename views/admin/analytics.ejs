@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analytics - EcomStore Admin</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <%- include('../partials/header') %>
+  
+  <main class="admin-page">
+    <div class="container">
+      <h1>Advanced Analytics</h1>
+      
+      <!-- Summary Stats -->
+      <div class="analytics-stats">
+        <div class="stat-card">
+          <h3>Total Revenue</h3>
+          <p class="stat-value">$<%= stats.totalRevenue.toFixed(2) %></p>
+        </div>
+        <div class="stat-card">
+          <h3>Total Orders</h3>
+          <p class="stat-value"><%= stats.totalOrders %></p>
+        </div>
+        <div class="stat-card">
+          <h3>Total Customers</h3>
+          <p class="stat-value"><%= stats.totalCustomers %></p>
+        </div>
+        <div class="stat-card">
+          <h3>Total Products</h3>
+          <p class="stat-value"><%= stats.totalProducts %></p>
+        </div>
+      </div>
+      
+      <!-- Charts -->
+      <div class="analytics-charts">
+        <div class="chart-box">
+          <h3>Sales Trends (Last 30 Days)</h3>
+          <canvas id="salesChart"></canvas>
+        </div>
+        
+        <div class="chart-box">
+          <h3>Top Selling Products</h3>
+          <canvas id="topProductsChart"></canvas>
+        </div>
+        
+        <div class="chart-box">
+          <h3>Customer Growth (Last 30 Days)</h3>
+          <canvas id="customerChart"></canvas>
+        </div>
+      </div>
+      
+      <!-- Low Stock Alert -->
+      <% if (lowStockProducts.length > 0) { %>
+        <div class="low-stock-section">
+          <h2>⚠️ Low Stock Alert</h2>
+          <div class="table-responsive">
+            <table class="orders-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Current Stock</th>
+                  <th>Threshold</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% lowStockProducts.forEach(product => { %>
+                  <tr>
+                    <td><%= product.name %></td>
+                    <td class="low-stock-value"><%= product.stock %></td>
+                    <td><%= product.lowStockThreshold %></td>
+                    <td><a href="/admin/products" class="btn btn-primary btn-sm">Restock</a></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      <% } %>
+    </div>
+  </main>
+  
+  <%- include('../partials/footer') %>
+  
+  <script>
+    // Sales Trends Chart
+    const salesData = <%- JSON.stringify(salesTrends) %>;
+    const salesCtx = document.getElementById('salesChart').getContext('2d');
+    new Chart(salesCtx, {
+      type: 'line',
+      data: {
+        labels: salesData.map(d => d._id),
+        datasets: [{
+          label: 'Revenue ($)',
+          data: salesData.map(d => d.revenue),
+          borderColor: '#3498db',
+          backgroundColor: 'rgba(52, 152, 219, 0.1)',
+          tension: 0.4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true
+      }
+    });
+    
+    // Top Products Chart
+    const topProducts = <%- JSON.stringify(topProducts) %>;
+    const topProductsCtx = document.getElementById('topProductsChart').getContext('2d');
+    new Chart(topProductsCtx, {
+      type: 'bar',
+      data: {
+        labels: topProducts.map(p => p.productName),
+        datasets: [{
+          label: 'Units Sold',
+          data: topProducts.map(p => p.totalSold),
+          backgroundColor: '#27ae60'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true
+      }
+    });
+    
+    // Customer Growth Chart
+    const customerData = <%- JSON.stringify(customerGrowth) %>;
+    const customerCtx = document.getElementById('customerChart').getContext('2d');
+    new Chart(customerCtx, {
+      type: 'line',
+      data: {
+        labels: customerData.map(d => d._id),
+        datasets: [{
+          label: 'New Customers',
+          data: customerData.map(d => d.newCustomers),
+          borderColor: '#9b59b6',
+          backgroundColor: 'rgba(155, 89, 182, 0.1)',
+          tension: 0.4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true
+      }
+    });
+  </script>
+</body>
+</html>

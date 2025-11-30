@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home - EcomStore</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <%- include('partials/header') %>
+  
+  <main class="home-page">
+    <div class="container">
+      <h1>Welcome to EcomStore</h1>
+      <p class="subtitle">Discover amazing products at great prices</p>
+      
+      <!-- Search and Filters -->
+      <div class="product-filters">
+        <form method="GET" action="/" class="filter-form">
+          <div class="filter-group">
+            <input type="text" name="search" placeholder="Search products..." value="<%= filters.search || '' %>">
+          </div>
+          
+          <div class="filter-group">
+            <select name="category">
+              <option value="all">All Categories</option>
+              <% categories.forEach(cat => { %>
+                <option value="<%= cat %>" <%= filters.category === cat ? 'selected' : '' %>><%= cat %></option>
+              <% }) %>
+            </select>
+          </div>
+          
+          <div class="filter-group">
+            <input type="number" name="minPrice" placeholder="Min Price" value="<%= filters.minPrice || '' %>" step="0.01">
+          </div>
+          
+          <div class="filter-group">
+            <input type="number" name="maxPrice" placeholder="Max Price" value="<%= filters.maxPrice || '' %>" step="0.01">
+          </div>
+          
+          <div class="filter-group">
+            <select name="sort">
+              <option value="">Sort By</option>
+              <option value="price-asc" <%= filters.sort === 'price-asc' ? 'selected' : '' %>>Price: Low to High</option>
+              <option value="price-desc" <%= filters.sort === 'price-desc' ? 'selected' : '' %>>Price: High to Low</option>
+              <option value="rating" <%= filters.sort === 'rating' ? 'selected' : '' %>>Highest Rated</option>
+            </select>
+          </div>
+          
+          <button type="submit" class="btn btn-primary">Apply Filters</button>
+          <a href="/" class="btn btn-secondary">Clear</a>
+        </form>
+      </div>
+      
+      <% if (products.length === 0) { %>
+        <div class="empty-state">
+          <p>No products available at the moment. Check back soon!</p>
+        </div>
+      <% } else { %>
+        <div class="products-grid">
+          <% products.forEach(product => { %>
+            <div class="product-card">
+              <% if (isAuthenticated) { %>
+                <button class="wishlist-heart" onclick="toggleWishlist(event, '<%= product._id %>')">❤️</button>
+              <% } %>
+              <a href="/products/<%= product._id %>">
+                <img src="<%= product.imageUrl %>" alt="<%= product.name %>">
+              </a>
+              <div class="product-info">
+                <h3><a href="/products/<%= product._id %>"><%= product.name %></a></h3>
+                <div class="product-rating">
+                  <span class="stars"><%= '★'.repeat(Math.round(product.rating)) %><%= '☆'.repeat(5 - Math.round(product.rating)) %></span>
+                  <span class="rating-text"><%= product.rating.toFixed(1) %> (<%= product.reviewCount %>)</span>
+                </div>
+                <p class="product-description"><%= product.description %></p>
+                <p class="product-price">$<%= product.price.toFixed(2) %></p>
+                
+                <% if (isAuthenticated) { %>
+                  <div class="product-actions">
+                    <button class="btn btn-primary" onclick="addToCart('<%= product._id %>')">
+                      Add to Cart
+                    </button>
+                    <button class="btn btn-secondary" onclick="buyNow('<%= product._id %>')">
+                      Buy Now
+                    </button>
+                  </div>
+                <% } else { %>
+                  <a href="/login" class="btn btn-secondary">Login to Buy</a>
+                <% } %>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+        
+        <!-- Pagination -->
+        <% if (pagination.totalPages > 1) { %>
+          <div class="pagination">
+            <% if (pagination.currentPage > 1) { %>
+              <a href="?page=<%= pagination.currentPage - 1 %><%= filters.search ? '&search=' + filters.search : '' %><%= filters.category ? '&category=' + filters.category : '' %><%= filters.sort ? '&sort=' + filters.sort : '' %>" class="pagination-btn">← Previous</a>
+            <% } %>
+            
+            <div class="pagination-numbers">
+              <% for (let i = 1; i <= pagination.totalPages; i++) { %>
+                <% if (i === pagination.currentPage) { %>
+                  <span class="pagination-number active"><%= i %></span>
+                <% } else if (i === 1 || i === pagination.totalPages || (i >= pagination.currentPage - 2 && i <= pagination.currentPage + 2)) { %>
+                  <a href="?page=<%= i %><%= filters.search ? '&search=' + filters.search : '' %><%= filters.category ? '&category=' + filters.category : '' %><%= filters.sort ? '&sort=' + filters.sort : '' %>" class="pagination-number"><%= i %></a>
+                <% } else if (i === pagination.currentPage - 3 || i === pagination.currentPage + 3) { %>
+                  <span class="pagination-dots">...</span>
+                <% } %>
+              <% } %>
+            </div>
+            
+            <% if (pagination.currentPage < pagination.totalPages) { %>
+              <a href="?page=<%= pagination.currentPage + 1 %><%= filters.search ? '&search=' + filters.search : '' %><%= filters.category ? '&category=' + filters.category : '' %><%= filters.sort ? '&sort=' + filters.sort : '' %>" class="pagination-btn">Next →</a>
+            <% } %>
+          </div>
+        <% } %>
+      <% } %>
+    </div>
+  </main>
+  
+  <%- include('partials/footer') %>
+  
+  <script src="/js/toast.js"></script>
+  <script>
+    async function toggleWishlist(event, productId) {
+      event.stopPropagation();
+      event.preventDefault();
+      
+      try {
+        const response = await fetch('/wishlist/add', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productId })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+          showToast('Added to wishlist! ❤️');
+          event.target.style.color = '#e74c3c';
+        } else {
+          showToast(data.error, 'error');
+        }
+      } catch (error) {
+        showToast('Failed to add to wishlist', 'error');
+      }
+    }
+    
+    async function addToCart(productId) {
+      try {
+        const response = await fetch('/cart/add', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ productId, quantity: 1 })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          showToast('Added to cart! 🛒');
+        } else {
+          showToast('Error: ' + data.error, 'error');
+        }
+      } catch (error) {
+        showToast('Failed to add to cart', 'error');
+      }
+    }
+    
+    async function buyNow(productId) {
+      try {
+        const response = await fetch('/orders', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ productId })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          if (confirm(data.message + '\n\nWould you like to view your orders now?')) {
+            window.location.href = '/my-orders';
+          } else {
+            window.location.reload();
+          }
+        } else {
+          alert('Error: ' + data.error);
+        }
+      } catch (error) {
+        alert('Failed to place order. Please try again.');
+      }
+    }
+  </script>
+</body>
+</html>
